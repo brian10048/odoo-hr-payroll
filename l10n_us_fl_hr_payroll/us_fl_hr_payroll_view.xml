@@ -12,6 +12,7 @@
                     <field name="fl_unemp_rate_2016"/>
                     <field name="fl_unemp_rate_2017"/>
                     <field name="fl_unemp_rate_2018"/>
+                    <field name="fl_unemp_rate_2019"/>
                  </xpath>
             </data>
             </field>

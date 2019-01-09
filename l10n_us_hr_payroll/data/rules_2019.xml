@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+<!-- HR SALARY RULES-->
+    <!-- Employee Deductions and Calculations -->
+    <record id="hr_payroll_rules_fica_emp_ss_wages_2019" model="hr.salary.rule">
+        <field name="sequence" eval="120"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_ss_wages"/>
+        <field name="name">FICA Employee Social Security Wages (2019)</field>
+        <field name="code">FICA_EMP_SS_WAGES_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###
+ytd = payslip.sum('FICA_EMP_SS_WAGES_2019', '2019-01-01', '2020-01-01')
+ytd += contract.external_wages
+remaining = 132900.0 - ytd
+if remaining &lt;= 0.0:
+    result = 0
+elif remaining &lt; categories.GROSS:
+    result = remaining
+else:
+    result = categories.GROSS
+        </field>
+        <field name="appears_on_payslip" eval="False"/>
+    </record>
+    <record id="hr_payroll_rules_fica_emp_m_wages_2019" model="hr.salary.rule">
+        <field name="sequence" eval="121"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_m_wages"/>
+        <field name="name">FICA Employee Medicare Wages (2019)</field>
+        <field name="code">FICA_EMP_M_WAGES_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = categories.GROSS</field>
+        <field name="appears_on_payslip" eval="False"/>
+    </record>
+    <record id="hr_payroll_rules_fica_emp_m_add_wages_2019" model="hr.salary.rule">
+        <field name="sequence" eval="122"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_m_add_wages"/>
+        <field name="name">FICA Employee Medicare Additional Wages (2019)</field>
+        <field name="code">FICA_EMP_M_ADD_WAGES_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###
+ADD_M = 200000.0
+norm_med_ytd = payslip.sum('FICA_EMP_M_WAGES_2019', '2019-01-01', '2020-01-01')
+norm_med_cur = categories.FICA_EMP_M_WAGES
+if ADD_M &gt; norm_med_ytd:
+    diff = ADD_M - norm_med_ytd
+    if norm_med_cur &gt; diff:
+        result = norm_med_cur - diff
+    else:
+        result = 0  # normal condition
+else:
+    result = norm_med_cur  # after YTD wages have passed the max
+        </field>
+        <field name="appears_on_payslip" eval="False"/>
+    </record>
+
+    <record id="hr_payroll_rules_fica_emp_ss_2019" model="hr.salary.rule">
+        <field name="sequence" eval="140"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_ss"/>
+        <field name="name">FICA Employee Social Security (2019)</field>
+        <field name="code">FICA_EMP_SS_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###  this should be "rules.FICA_EMP_SS_WAGES_2019", but it doesn't work
+result_rate = -6.2
+result = categories.FICA_EMP_SS_WAGES
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_941"/>
+    </record>
+    <record id="hr_payroll_rules_fica_emp_m_2019" model="hr.salary.rule">
+        <field name="sequence" eval="141"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_m"/>
+        <field name="name">FICA Employee Medicare (2019)</field>
+        <field name="code">FICA_EMP_M_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###  this should be "rules.FICA_EMP_M_WAGES_2019", but it doesn't work
+result_rate = -1.45
+result = categories.FICA_EMP_M_WAGES
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_941"/>
+    </record>
+    <record id="hr_payroll_rules_fica_emp_m_add_2019" model="hr.salary.rule">
+        <field name="sequence" eval="142"/>
+        <field name="category_id" ref="hr_payroll_fica_emp_m_add"/>
+        <field name="name">FICA Employee Medicare Additional (2019)</field>
+        <field name="code">FICA_EMP_M_ADD_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###  this should be "rules.FICA_EMP_M_ADD_WAGES_2019", but it doesn't work
+result_rate = -0.9
+result = categories.FICA_EMP_M_ADD_WAGES
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_941"/>
+    </record>
+
+    <!-- Federal Income Tax Withholding -->
+    <!-- pg 46 Pub 15 -->
+    <record id="hr_payroll_rules_fed_inc_withhold_2019_single" model="hr.salary.rule">
+        <field name="sequence" eval="145"/>
+        <field name="category_id" ref="hr_payroll_fed_income_withhold"/>
+        <field name="name">Federal Income Withholding - Single (2019)</field>
+        <field name="code">FED_INC_WITHHOLD_2019_S</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019' and contract.w4_filing_status != 'married' and contract.w4_filing_status)</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+wages = categories.GROSS
+allowances = contract.w4_allowances
+is_nra = contract.w4_is_nonresident_alien
+schedule_pay = contract.schedule_pay
+val = 0.00
+additional = contract.w4_additional_withholding
+
+###
+# Single WEEKLY
+###
+if 'weekly' == schedule_pay:
+    wages -= allowances * 80.80
+    if is_nra:
+        wages += 153.80
+
+    if wages &gt; 73 and wages &lt;= 260:
+        val = 0.00 + ((wages - 73) * 0.10)
+
+    elif wages &gt; 260 and wages &lt;= 832:
+        val = 18.70 + ((wages - 260) * 0.12)
+
+    elif wages &gt; 832 and wages &lt;= 1692:
+        val = 87.34 + ((wages - 832) * 0.22)
+
+    elif wages &gt; 1692 and wages &lt;= 3164:
+        val = 276.54 + ((wages - 1692) * 0.24)
+
+    elif wages &gt; 3164 and wages &lt;= 3998:
+        val = 629.82 + ((wages - 3164) * 0.32)
+
+    elif wages &gt; 3998 and wages &lt;= 9887:
+        val = 896.70 + ((wages - 3998) * 0.35)
+
+    elif wages &gt; 9887:
+        val = 2957.85 + ((wages - 9887) * 0.37)
+
+###
+# Single BIWEEKLY
+###
+elif 'bi-weekly' == schedule_pay:
+    wages -= allowances * 161.50
+    if is_nra:
+        wages += 307.70
+
+    if wages &gt; 146 and wages &lt;= 519:
+        val = 0.00 + ((wages - 146) * 0.10)
+
+    elif wages &gt; 519 and wages &lt;= 1664:
+        val = 37.30 + ((wages - 519) * 0.12)
+
+    elif wages &gt; 1664 and wages &lt;= 3385:
+        val = 174.70 + ((wages - 1664) * 0.22)
+
+    elif wages &gt; 3385 and wages &lt;= 6328:
+        val = 553.32 + ((wages - 3385) * 0.24)
+
+    elif wages &gt; 6328 and wages &lt;= 7996:
+        val = 1259.64 + ((wages - 6328) * 0.32)
+
+    elif wages &gt; 7996 and wages &lt;= 19773:
+        val = 1793.40 + ((wages - 7996) * 0.35)
+
+    elif wages &gt; 19773:
+        val = 5915.35 + ((wages - 19773) * 0.37)
+
+###
+# Single SEMIMONTHLY
+###
+elif 'semi-monthly' == schedule_pay:
+    wages -= allowances * 175.00
+    if is_nra:
+        wages += 333.30
+
+    if wages &gt; 158 and wages &lt;= 563:
+        val = 0.00 + ((wages - 158) * 0.10)
+
+    elif wages &gt; 563 and wages &lt;= 1803:
+        val = 40.50 + ((wages - 563) * 0.12)
+
+    elif wages &gt; 1803 and wages &lt;= 3667:
+        val = 189.30 + ((wages - 1803) * 0.22)
+
+    elif wages &gt; 3667 and wages &lt;= 6855:
+        val = 599.38 + ((wages - 3667) * 0.24)
+
+    elif wages &gt; 6855 and wages &lt;= 8663:
+        val = 1364.50 + ((wages - 6855) * 0.32)
+
+    elif wages &gt; 8663 and wages &lt;= 21421:
+        val = 1943.06 + ((wages - 8663) * 0.35)
+
+    elif wages &gt; 21421:
+        val = 6408.36 + ((wages - 21421) * 0.37)
+
+###
+# Single MONTHLY
+###
+elif 'monthly' == schedule_pay:
+    wages -= allowances * 350.00
+    if is_nra:
+        wages += 666.70
+
+    if wages &gt; 317 and wages &lt;= 1125:
+        val = 0.00 + ((wages - 317) * 0.10)
+
+    elif wages &gt; 1125 and wages &lt;= 3606:
+        val = 80.80 + ((wages - 1125) * 0.12)
+
+    elif wages &gt; 3606 and wages &lt;= 7333:
+        val = 378.52 + ((wages - 3606) * 0.22)
+
+    elif wages &gt; 7333 and wages &lt;= 13710:
+        val = 1198.46 + ((wages - 7333) * 0.24)
+
+    elif wages &gt; 13710 and wages &lt;= 17325:
+        val = 2728.94 + ((wages - 13710) * 0.32)
+
+    elif wages &gt; 17325 and wages &lt;= 42842:
+        val = 3885.74 + ((wages - 17325) * 0.35)
+
+    elif wages &gt; 42842:
+        val = 12816.69 + ((wages - 42842) * 0.37)
+
+###
+# Single QUARTERLY
+###
+elif 'quarterly' == schedule_pay:
+    wages -= allowances * 1050.00
+    if is_nra:
+        wages += 2000.00
+
+    if wages &gt; 950 and wages &lt;= 3375:
+        val = 0.00 + ((wages - 950) * 0.10)
+
+    elif wages &gt; 3375 and wages &lt;= 10819:
+        val = 242.50 + ((wages - 3375) * 0.12)
+
+    elif wages &gt; 10819 and wages &lt;= 22000:
+        val = 1135.78 + ((wages - 10819) * 0.22)
+
+    elif wages &gt; 22000 and wages &lt;= 41131:
+        val = 3595.60 + ((wages - 22000) * 0.24)
+
+    elif wages &gt; 41131 and wages &lt;= 51975:
+        val = 8187.04 + ((wages - 41131) * 0.32)
+
+    elif wages &gt; 51975 and wages &lt;= 128525:
+        val = 11657.12 + ((wages - 51975) * 0.35)
+
+    elif wages &gt; 128525:
+        val = 38449.62 + ((wages - 128525) * 0.37)
+
+###
+# Single SEMIANNUAL
+###
+elif 'semi-annually' == schedule_pay:
+    wages -= allowances * 2100.00
+    if is_nra:
+        wages += 4000.00
+
+    if wages &gt; 1900 and wages &lt;= 6750:
+        val = 0.00 + ((wages - 1900) * 0.10)
+
+    elif wages &gt; 6750 and wages &lt;= 21638:
+        val = 485.00 + ((wages - 6750) * 0.12)
+
+    elif wages &gt; 21638 and wages &lt;= 44000:
+        val = 2271.56 + ((wages - 21638) * 0.22)
+
+    elif wages &gt; 44000 and wages &lt;= 82263:
+        val = 7191.20 + ((wages - 44000) * 0.24)
+
+    elif wages &gt; 82263 and wages &lt;= 103950:
+        val = 16374.32 + ((wages - 82263) * 0.32)
+
+    elif wages &gt; 103950 and wages &lt;= 257050:
+        val = 23314.16 + ((wages - 103950) * 0.35)
+
+    elif wages &gt; 257050:
+        val = 76899.16 + ((wages - 257050) * 0.37)
+
+###
+# Single ANNUAL
+###
+elif 'annually' == schedule_pay:
+    wages -= allowances * 4200.00
+    if is_nra:
+        wages += 8000.00
+
+    if wages &gt; 3800 and wages &lt;= 13500:
+        val = 0.00 + ((wages - 3800) * 0.10)
+
+    elif wages &gt; 13500 and wages &lt;= 43275:
+        val = 970.00 + ((wages - 13500) * 0.12)
+
+    elif wages &gt; 43275 and wages &lt;= 88000:
+        val = 4543.00 + ((wages - 43275) * 0.22)
+
+    elif wages &gt; 88000 and wages &lt;= 164525:
+        val = 14382.50 + ((wages - 88000) * 0.24)
+
+    elif wages &gt; 164525 and wages &lt;= 207900:
+        val = 32748.50 + ((wages - 164525) * 0.32)
+
+    elif wages &gt; 207900 and wages &lt;= 514100:
+        val = 46628.50 + ((wages - 207900) * 0.35)
+
+    elif wages &gt; 514100:
+        val = 153798.50 + ((wages - 514100) * 0.37)
+
+else:
+    raise Exception('Invalid schedule_pay="' + schedule_pay + '" for W4 Allowance calculation')
+
+result = -(val + additional)
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_941"/>
+    </record>
+    <record id="hr_payroll_rules_fed_inc_withhold_2019_married" model="hr.salary.rule">
+        <field name="sequence" eval="145"/>
+        <field name="category_id" ref="hr_payroll_fed_income_withhold"/>
+        <field name="name">Federal Income Withholding - Married (2019)</field>
+        <field name="code">FED_INC_WITHHOLD_2019_M</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019' and contract.w4_filing_status == 'married')</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+wages = categories.GROSS
+allowances = contract.w4_allowances
+is_nra = contract.w4_is_nonresident_alien
+schedule_pay = contract.schedule_pay
+val = 0.00
+additional = contract.w4_additional_withholding
+
+###
+# Married WEEKLY
+###
+if 'weekly' == schedule_pay:
+    wages -= allowances * 80.80
+    if is_nra:
+        wages += 153.80
+
+    if wages &gt; 227 and wages &lt;= 600:
+        val = 0.00 + ((wages - 227) * 0.10)
+
+    elif wages &gt; 600 and wages &lt;= 1745:
+        val = 37.30 + ((wages - 600) * 0.12)
+
+    elif wages &gt; 1745 and wages &lt;= 3465:
+        val = 174.70 + ((wages - 1745) * 0.22)
+
+    elif wages &gt; 3465 and wages &lt;= 6409:
+        val = 553.10 + ((wages - 3465) * 0.24)
+
+    elif wages &gt; 6409 and wages &lt;= 8077:
+        val = 1259.66 + ((wages - 6409) * 0.32)
+
+    elif wages &gt; 8077 and wages &lt;= 12003:
+        val = 1793.42 + ((wages - 8077) * 0.35)
+
+    elif wages &gt; 12003:
+        val = 3167.52 + ((wages - 12003) * 0.37)
+
+###
+# Married BIWEEKLY
+###
+elif 'bi-weekly' == schedule_pay:
+    wages -= allowances * 161.50
+    if is_nra:
+        wages += 307.70
+
+    if wages &gt; 454 and wages &lt;= 1200:
+        val = 0.00 + ((wages - 454) * 0.10)
+
+    elif wages &gt; 1200 and wages &lt;= 3490:
+        val = 74.60 + ((wages - 1200) * 0.12)
+
+    elif wages &gt; 3490 and wages &lt;= 6931:
+        val = 349.40 + ((wages - 3490) * 0.22)
+
+    elif wages &gt; 6931 and wages &lt;= 12817:
+        val = 1106.42 + ((wages - 6931) * 0.24)
+
+    elif wages &gt; 12817 and wages &lt;= 16154:
+        val = 2519.06 + ((wages - 12817) * 0.32)
+
+    elif wages &gt; 16154 and wages &lt;= 24006:
+        val = 3586.90 + ((wages - 16154) * 0.35)
+
+    elif wages &gt; 24006:
+        val = 6335.10 + ((wages - 24006) * 0.37)
+
+###
+# Married SEMIMONTHLY
+###
+elif 'semi-monthly' == schedule_pay:
+    wages -= allowances * 175.00
+    if is_nra:
+        wages += 333.30
+
+    if wages &gt; 492 and wages &lt;= 1300:
+        val = 0.00 + ((wages - 481) * 0.10)
+
+    elif wages &gt; 1300 and wages &lt;= 3781:
+        val = 80.80 + ((wages - 1300) * 0.12)
+
+    elif wages &gt; 3781 and wages &lt;= 7508:
+        val = 378.52 + ((wages - 3781) * 0.22)
+
+    elif wages &gt; 7508 and wages &lt;= 13885:
+        val = 1198.46 + ((wages - 7508) * 0.24)
+
+    elif wages &gt; 13885 and wages &lt;= 17500:
+        val = 2728.94 + ((wages - 13885) * 0.32)
+
+    elif wages &gt; 17500 and wages &lt;= 26006:
+        val = 3885.75 + ((wages - 17500) * 0.35)
+
+    elif wages &gt; 26006:
+        val = 6862.84 + ((wages - 26006) * 0.37)
+
+###
+# Married MONTHLY
+###
+elif 'monthly' == schedule_pay:
+    wages -= allowances * 350.00
+    if is_nra:
+        wages += 666.70
+
+    if wages &gt; 983 and wages &lt;= 2600:
+        val = 0.00 + ((wages - 983) * 0.10)
+
+    elif wages &gt; 2600 and wages &lt;= 7563:
+        val = 161.70 + ((wages - 2600) * 0.12)
+
+    elif wages &gt; 7563 and wages &lt;= 15017:
+        val = 757.26 + ((wages - 7563) * 0.22)
+
+    elif wages &gt; 15017 and wages &lt;= 27771:
+        val = 2397.14 + ((wages - 15017) * 0.24)
+
+    elif wages &gt; 27771 and wages &lt;= 35000:
+        val = 5458.10 + ((wages - 27771) * 0.32)
+
+    elif wages &gt; 35000 and wages &lt;= 52013:
+        val = 7771.38 + ((wages - 35000) * 0.35)
+
+    elif wages &gt; 52013:
+        val = 13725.93 + ((wages - 52013) * 0.37)
+
+###
+# Married QUARTERLY
+###
+elif 'quarterly' == schedule_pay:
+    wages -= allowances * 1050.00
+    if is_nra:
+        wages += 2000.00
+
+    if wages &gt; 2950 and wages &lt;= 7800:
+        val = 0.00 + ((wages - 2950) * 0.10)
+
+    elif wages &gt; 7800 and wages &lt;= 22688:
+        val = 485.00 + ((wages - 7800) * 0.12)
+
+    elif wages &gt; 22688 and wages &lt;= 45050:
+        val = 2271.56 + ((wages - 22688) * 0.22)
+
+    elif wages &gt; 45050 and wages &lt;= 83313:
+        val = 7191.20 + ((wages - 45050) * 0.24)
+
+    elif wages &gt; 83313 and wages &lt;= 105000:
+        val = 16374.32 + ((wages - 83313) * 0.32)
+
+    elif wages &gt; 105000 and wages &lt;= 156038:
+        val = 23314.16 + ((wages - 105000) * 0.35)
+
+    elif wages &gt; 156038:
+        val = 41177.46 + ((wages - 156038) * 0.37)
+
+###
+# Married SEMIANNUAL
+###
+elif 'semi-annually' == schedule_pay:
+    wages -= allowances * 2100.00
+    if is_nra:
+        wages += 4000.00
+
+    if wages &gt; 5900 and wages &lt;= 15600:
+        val = 0.00 + ((wages - 5900) * 0.10)
+
+    elif wages &gt; 15600 and wages &lt;= 45375:
+        val = 970.00 + ((wages - 15600) * 0.12)
+
+    elif wages &gt; 45375 and wages &lt;= 90100:
+        val = 4543.00 + ((wages - 45375) * 0.22)
+
+    elif wages &gt; 90100 and wages &lt;= 166625:
+        val = 14382.50 + ((wages - 90100) * 0.24)
+
+    elif wages &gt; 166625 and wages &lt;= 210000:
+        val = 32748.50 + ((wages - 166625) * 0.32)
+
+    elif wages &gt; 210000 and wages &lt;= 312075:
+        val = 46628.50 + ((wages - 210000) * 0.35)
+
+    elif wages &gt; 312075:
+        val = 82354.75 + ((wages - 312075) * 0.37)
+
+###
+# Married ANNUAL
+###
+elif 'annually' == schedule_pay:
+    wages -= allowances * 4200.00
+    if is_nra:
+        wages += 8000.00
+
+    if wages &gt; 11800 and wages &lt;= 31200:
+        val = 0.00 + ((wages - 11800) * 0.10)
+
+    elif wages &gt; 31200 and wages &lt;= 90750:
+        val = 1940.00 + ((wages - 31200) * 0.12)
+
+    elif wages &gt; 90750 and wages &lt;= 180200:
+        val = 9086.00 + ((wages - 90750) * 0.22)
+
+    elif wages &gt; 180200 and wages &lt;= 333250:
+        val = 28765.00 + ((wages - 180200) * 0.24)
+
+    elif wages &gt; 333250 and wages &lt;= 420000:
+        val = 65497.00 + ((wages - 333250) * 0.32)
+
+    elif wages &gt; 420000 and wages &lt;= 624150:
+        val = 93257.00 + ((wages - 420000) * 0.35)
+
+    elif wages &gt; 624150:
+        val = 164709.50 + ((wages - 624150) * 0.37)
+
+else:
+    raise Exception('Invalid schedule_pay="' + schedule_pay + '" for W4 Allowance calculation')
+
+result = -(val + additional)
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_941"/>
+    </record>
+
+    <record id="hr_payroll_rules_futa_wages_2019" model="hr.salary.rule">
+        <field name="sequence" eval="422"/>
+        <field name="category_id" ref="hr_payroll_futa_wages"/>
+        <field name="name">FUTA Federal Unemployment - Wages (2019)</field>
+        <field name="code">FUTA_WAGES_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019' and contract.futa_type != contract.FUTA_TYPE_EXEMPT)</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+###
+ytd = payslip.sum('FUTA_WAGES_2019', '2019-01-01', '2020-01-01')
+ytd += contract.external_wages
+remaining = 7000.0 - ytd
+if remaining &lt;= 0.0:
+    result = 0
+elif remaining &lt; categories.GROSS:
+    result = remaining
+else:
+    result = categories.GROSS
+        </field>
+        <field name="appears_on_payslip" eval="False"/>
+    </record>
+    <record id="hr_payroll_rules_futa_2019" model="hr.salary.rule">
+        <field name="sequence" eval="442"/>
+        <field name="category_id" ref="hr_payroll_futa"/>
+        <field name="name">FUTA Federal Unemployment (2019)</field>
+        <field name="code">FUTA_2019</field>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = (payslip.date_to[:4] == '2019' and contract.futa_type != contract.FUTA_TYPE_EXEMPT)</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+result_rate = -(contract.futa_rate(2019))
+result = categories.FUTA_WAGES
+        </field>
+        <field name="register_id" ref="contrib_register_eftps_940"/>
+        <field name="appears_on_payslip" eval="False"/>
+    </record>
+
+    </data>
+</odoo>

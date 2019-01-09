@@ -5,7 +5,7 @@
     'license': 'AGPL-3',
     'category': 'Localization',
     'depends': ['hr_payroll'],
-    'version': '11.0.2017.0.0',
+    'version': '11.0.2019.0.0',
     'description': """
 USA Payroll Rules.
 ==================
@@ -26,6 +26,7 @@ USA Payroll Rules.
         'data/rules_2016.xml',
         'data/rules_2017.xml',
         'data/rules_2018.xml',
+        'data/rules_2019.xml',
         'data/final.xml',
     ],
     'installable': True

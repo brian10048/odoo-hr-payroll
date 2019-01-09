@@ -23,3 +23,4 @@ class FLCompany(models.Model):
     fl_unemp_rate_2016 = fields.Float(string="Florida Unemployment Rate 2016", default=2.7)
     fl_unemp_rate_2017 = fields.Float(string="Florida Unemployment Rate 2017", default=2.7)
     fl_unemp_rate_2018 = fields.Float(string="Florida Unemployment Rate 2018", default=2.7)
+    fl_unemp_rate_2019 = fields.Float(string="Florida Unemployment Rate 2019", default=2.7)
